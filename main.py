@@ -4,7 +4,7 @@ import uuid
 from typing import Optional
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from models import User, Role, Patient
+from models import User, Patient
 from database import create_tables, get_db
 from pydantic import BaseModel as PydanticBaseModel, field_validator
 from sqlalchemy.orm import Session
@@ -121,7 +121,7 @@ def create_token(data: OAuth2PasswordRequestForm = Depends(), db: Session = Depe
         user_exists = db.query(User).filter(data.username == User.username).first()
         if user_exists:
             if verify_password(data.password, user_exists.password):
-                expiry = datetime.datetime.utcnow() + datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+                expiry = datetime.datetime.now(datetime.UTC) + datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
                 jwt_token = jwt.encode(
                     {"username": user_exists.username, "role": user_exists.role.value, "exp": expiry},
                     SECRET_KEY, algorithm=ALGORITHM)
