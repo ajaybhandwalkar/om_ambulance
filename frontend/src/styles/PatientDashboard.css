@@ -1,0 +1,114 @@
+/* Container Styling */
+.dashboard-container {
+  padding: 15px;
+  font-family: 'Arial', sans-serif;
+}
+
+.dashboard-title {
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Filter Form */
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.filter-input {
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  width: 180px;
+}
+
+.filter-submit-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background-color: #007bff;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.filter-submit-btn:hover {
+  background-color: #0056b3;
+}
+
+/* Table Styling */
+.patient-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.patient-table th, .patient-table td {
+  padding: 11px;
+  border: 1px solid #ddd;
+}
+
+.patient-table th {
+  background-color: #f4f4f4;
+  color: #333;
+}
+
+.patient-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.patient-table tr:hover {
+  background-color: #e6f7ff;
+}
+
+.patient-table td {
+  font-size: 14px;
+}
+
+/* Error Message */
+.error-message {
+  color: red;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* Pagination Controls */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.pagination-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.pagination-text {
+  font-size: 14px;
+  color: #333;
+}

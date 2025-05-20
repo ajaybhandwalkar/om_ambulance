@@ -1,0 +1,63 @@
+/* Ensure the full page height is used */
+html, body, #root {
+
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+
+/* Main container to center everything */
+.login-page {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f2f5;
+}
+
+
+
+/* Form styles */
+.login-form {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.login-form h2 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.login-form input {
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.login-form button {
+  padding: 10px;
+  font-size: 16px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.login-form button:disabled {
+  background-color: #8bc34a;
+}
+
+.error {
+  color: red;
+  text-align: center;
+}
