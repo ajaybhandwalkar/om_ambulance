@@ -50,7 +50,8 @@
   margin-top: 20px;
 }
 
-.patient-table th, .patient-table td {
+.patient-table th,
+.patient-table td {
   padding: 11px;
   border: 1px solid #ddd;
 }

@@ -1,5 +1,7 @@
 /* Ensure the full page height is used */
-html, body, #root {
+html,
+body,
+#root {
 
   width: 100%;
   margin: 0;

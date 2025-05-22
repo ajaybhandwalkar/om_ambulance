@@ -26,11 +26,11 @@ export default function Login({ setToken }) {
 
       const token = response.data.access_token;
       localStorage.setItem('token', token); // persist
-      if (typeof setToken === "function" ){
-          setToken(token); // trigger PatientDashboard
+      if (typeof setToken === "function") {
+        setToken(token); // trigger PatientDashboard
       } else {
-            navigate("/patient-dashboard", { state: { token } });
-          }
+        navigate("/patient-dashboard", { state: { token } });
+      }
 
     } catch (error) {
       const status = error.response?.status;

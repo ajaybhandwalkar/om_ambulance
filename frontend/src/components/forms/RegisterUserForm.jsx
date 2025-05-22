@@ -41,10 +41,10 @@ export default function RegisterUserForm() {  // Pass token as a prop
         setErrorMessage('Username already exists.');
       } else if (error.response && error.response.status === 403) {
         setErrorMessage('Only owners can register users.');
-      }else if (error.response && error.response.status === 401) {
-            setErrorMessage('Session expired redirecting to Login')
-            await sleep(3000);
-            navigate("/login")
+      } else if (error.response && error.response.status === 401) {
+        setErrorMessage('Session expired redirecting to Login')
+        await sleep(3000);
+        navigate("/login")
       } else {
         setErrorMessage('An error occurred. Please try again later.');
       }
