@@ -54,8 +54,14 @@ def create_token(data: OAuth2PasswordRequestForm = Depends(), db: Session = Depe
 
 
 @app.post("/register")
-def register(user: UserSchema, db: Session = Depends(get_db)):
-    logger.info(f"Attempt to register user: {user.username}")
+def register(user: UserSchema, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+    print(token, user )
+    current_user = decode_jwt(token)
+    print(current_user)
+    logger.info(f"Attempt to register user: {user.username} by {current_user['username']}")
+    if current_user['role'] != "OWNER":
+        logger.warning(f"Forbade to register user {user.username} by {current_user['username']}")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only Owners can register new user.")
     try:
         check_user = db.query(UserModel).filter(user.username == UserModel.username).all()
         if not check_user:
@@ -67,7 +73,10 @@ def register(user: UserSchema, db: Session = Depends(get_db)):
             return {"msg": f"user {user.username} is registered."}
         else:
             logger.warning(f"Username {user.username} already exists.")
-            return HTTPException(status_code=409, detail="Username already exist")
+            raise HTTPException(status_code=409, detail="Username already exist")
+    except HTTPException as error:
+        db.rollback()
+        raise error
     except Exception as e:
         db.rollback()
         logger.error(f"Error occurred during registration for user {user.username}: {str(e)}")
@@ -102,7 +111,6 @@ def add_patient(patient: PatientSchema, db: Session = Depends(get_db), token: st
 @app.post("/get-search_criteria")
 def get_search_criteria(search_criteria: PatientSearchCriteria, db: Session = Depends(get_db),
                         token: str = Depends(oauth2_scheme)):
-    print(search_criteria)
     current_user = decode_jwt(token)
     logger.info(f"User {current_user['username']} requesting search criteria for patients.")
     try:
@@ -122,8 +130,6 @@ def get_search_criteria(search_criteria: PatientSearchCriteria, db: Session = De
                 patient_search_query = patient_search_query.filter(PatientModel.date <= value)
                 continue
             patient_search_query = patient_search_query.filter(getattr(PatientModel, field) == value)
-
-        logger.info(f"Search criteria applied successfully.")
         return {"patient_search_criteria": patient_search_query.all()}
     except Exception as e:
         logger.error(f"Error occurred while retrieving patient by search criteria: {str(e)}")

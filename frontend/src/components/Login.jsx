@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import axios from 'axios';
 import '../styles/Login.css';
+import { useNavigate } from 'react-router-dom';
 
 export default function Login({ setToken }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const login = async (e) => {
     e.preventDefault();
@@ -24,7 +26,12 @@ export default function Login({ setToken }) {
 
       const token = response.data.access_token;
       localStorage.setItem('token', token); // persist
-      setToken(token); // trigger PatientDashboard
+      if (typeof setToken === "function" ){
+          setToken(token); // trigger PatientDashboard
+      } else {
+            navigate("/patient-dashboard", { state: { token } });
+          }
+
     } catch (error) {
       const status = error.response?.status;
       if (status === 401) {

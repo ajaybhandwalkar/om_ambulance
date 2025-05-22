@@ -47,6 +47,7 @@ class PatientCommonFields(BaseModel):
 class PatientSearchCriteria(PatientCommonFields):
     from_date: Optional[datetime.datetime] = None
     to_date: Optional[datetime.datetime] = None
+    driver: Optional[str] = ""
 
     @field_validator("date", "from_date", "to_date", mode="before")
     @classmethod

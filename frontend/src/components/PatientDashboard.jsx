@@ -1,29 +1,31 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useLocation } from 'react-router-dom';
 
 export default function PatientDashboard({ token }) {
+  const location = useLocation();
+  const tokenFromLocation = location.state?.token;
+  token = token || tokenFromLocation;
+
   const [patients, setPatients] = useState([]);
   const [error, setError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
   const [totalCount, setTotalCount] = useState(0);
-
-  // Form inputs for filtering
   const [filters, setFilters] = useState({
     name: '',
     picked_from: '',
     dropped_at: '',
     date: '',
     from_date: '',
-    to_date: ''
+    to_date: '',
+    driver: ''
   });
 
-  // Fetch patients (with all data)
   const fetchPatients = async () => {
     setError('');
     const payload = {};
 
-    // Add filter criteria to the request
     for (const key in filters) {
       if (filters[key]?.trim() !== '') {
         payload[key] = filters[key];
@@ -31,20 +33,16 @@ export default function PatientDashboard({ token }) {
     }
 
     try {
-      const response = await axios.post(
-        '/api/get-search_criteria',
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await axios.post('api/get-search_criteria', payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-      // Assuming the response contains all patient data
-      setPatients(response.data.patient_search_criteria || []);
-      setTotalCount(response.data.patient_search_criteria.length);  // Use length of the full data for pagination
+      const data = response.data.patient_search_criteria || [];
+      setPatients(data);
+      setTotalCount(data.length);
     } catch (err) {
       console.error(err);
       setError('Failed to fetch patient data.');
@@ -53,11 +51,11 @@ export default function PatientDashboard({ token }) {
 
   useEffect(() => {
     fetchPatients();
-  }, [filters]); // Re-run when filters change
+  }, [filters]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'date' || name === 'from_date' || name === 'to_date') {
+    if (['date', 'from_date', 'to_date'].includes(name)) {
       setFilters({
         ...filters,
         [name]: value.includes('T') ? value : `${value}T00:00`,
@@ -67,74 +65,33 @@ export default function PatientDashboard({ token }) {
     }
   };
 
-  // Handle filter form submission
   const handleSubmit = (e) => {
     e.preventDefault();
-    setCurrentPage(1); // Reset to first page on new search
+    setCurrentPage(1);
     fetchPatients();
   };
 
-  // Pagination logic
-  const totalPages = Math.ceil(totalCount / rowsPerPage);  // Calculate total pages based on the totalCount of patients
+  const totalPages = Math.ceil(totalCount / rowsPerPage);
   const startIdx = (currentPage - 1) * rowsPerPage;
-  const currentRows = patients.slice(startIdx, startIdx + rowsPerPage);  // Slice the patients array to get the current page's data
+  const currentRows = patients.slice(startIdx, startIdx + rowsPerPage);
 
-  const handlePrev = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));  // Don't go below page 1
-  };
-
-  const handleNext = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));  // Don't go beyond total pages
-  };
+  const handlePrev = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
+  const handleNext = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
 
   return (
     <div className="dashboard-container">
-      <h2 className="dashboard-title">Patient List</h2>
+      <div className="dashboard-header">
+        <h2 className="dashboard-title">Patient List</h2>
+      </div>
 
-      {/* Filter Form */}
       <form onSubmit={handleSubmit} className="filter-form">
-        <input
-          name="name"
-          placeholder="Name"
-          value={filters.name}
-          onChange={handleChange}
-          className="filter-input"
-        />
-        <input
-          name="picked_from"
-          placeholder="Picked From"
-          value={filters.picked_from}
-          onChange={handleChange}
-          className="filter-input"
-        />
-        <input
-          name="dropped_at"
-          placeholder="Dropped At"
-          value={filters.dropped_at}
-          onChange={handleChange}
-          className="filter-input"
-        />
-        <input
-          name="date"
-          type="datetime-local"
-          value={filters.date}
-          onChange={handleChange}
-          className="filter-input"
-        />
-        <input
-          name="from_date"
-          type="datetime-local"
-          value={filters.from_date}
-          onChange={handleChange}
-          className="filter-input"
-        />
-        <input
-          name="to_date"
-          type="datetime-local"
-          value={filters.to_date}
-          onChange={handleChange}
-          className="filter-input"
-        />
+        <input name="name" placeholder="Name" value={filters.name} onChange={handleChange} />
+        <input name="picked_from" placeholder="Picked From" value={filters.picked_from} onChange={handleChange} />
+        <input name="dropped_at" placeholder="Dropped At" value={filters.dropped_at} onChange={handleChange} />
+        <input name="driver" placeholder="Driver Name" value={filters.driver} onChange={handleChange} />
+        <input name="date" type="datetime-local" value={filters.date} onChange={handleChange} />
+        <input name="from_date" type="datetime-local" value={filters.from_date} onChange={handleChange} />
+        <input name="to_date" type="datetime-local" value={filters.to_date} onChange={handleChange} />
         <button type="submit" className="filter-submit-btn">Search</button>
       </form>
 
