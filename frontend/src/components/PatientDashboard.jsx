@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom'; // Add useNavigate
 
 export default function PatientDashboard({ token }) {
   const location = useLocation();
+  const navigate = useNavigate(); // initialize navigate
   const tokenFromLocation = location.state?.token;
   token = token || tokenFromLocation;
 
@@ -78,6 +79,33 @@ export default function PatientDashboard({ token }) {
   const handlePrev = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
   const handleNext = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
 
+  // ** New handler: Update button **
+  const handleUpdate = (patient) => {
+    // Navigate to your update form page and pass patient ID as param or state
+    navigate(`/update-patient`, { state: { patient, token } });
+  };
+
+  // ** New handler: Delete button **
+  const handleDelete = async (id) => {
+    const confirmed = window.confirm('Are you sure you want to delete this patient record?');
+    if (!confirmed) return;
+
+    try {
+      const response = await axios.delete(`api/delete-patient/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      // Remove deleted patient from local state to update UI
+      setPatients((prev) => prev.filter((p) => p.id !== id));
+      setTotalCount((prev) => prev - 1);
+      alert(`Patient record deleted successfully.\n ${response.data["Record deleted: "]}`);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete patient record.');
+    }
+  };
+
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
@@ -110,6 +138,7 @@ export default function PatientDashboard({ token }) {
             <th>Age</th>
             <th>Driver</th>
             <th>Amount</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -124,10 +153,14 @@ export default function PatientDashboard({ token }) {
                 <td>{p.age}</td>
                 <td>{p.driver}</td>
                 <td>{p.amount}</td>
+                <td>
+                  <button onClick={() => handleUpdate(p)} className="update-btn">Update</button>
+                  <button onClick={() => handleDelete(p.id)} className="delete-btn">Delete</button>
+                </td>
               </tr>
             ))
           ) : (
-            <tr><td colSpan="8">No patients found.</td></tr>
+            <tr><td colSpan="9">No patients found.</td></tr>
           )}
         </tbody>
       </table>

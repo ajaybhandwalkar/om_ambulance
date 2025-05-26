@@ -11,7 +11,10 @@ def parse_date_string(date_str: str) -> Optional[datetime.datetime]:
     if isinstance(date_str, str) and date_str.strip() != "" and len(date_str)>=10:
         try:
             logger.info(date_str)
-            return datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M").date()
+            try:
+                return datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M").date()
+            except ValueError:
+                return datetime.datetime.strptime(date_str, "%Y-%m-%d")
         except ValueError:
             logger.warning(f"Invalid date format. Expected 'YYYY-MM-DD'. Trying for DD-MM-YYYY")
             try:

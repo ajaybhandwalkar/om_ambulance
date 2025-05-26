@@ -87,15 +87,20 @@ def register(user: UserSchema, db: Session = Depends(get_db), token: str = Depen
 def add_patient(patient: PatientSchema, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
     current_user = decode_jwt(token)
     logger.info(f"User {current_user['username']} adding a patient.")
+    if current_user["role"] == "Driver":
+        driver = current_user["username"]
+    else:  # current_user["role"] == "Owner"
+        result = db.query(UserModel).filter(UserModel.name == patient.driver).first() if patient.driver else None
+        driver = result.username if result else current_user["username"]
     try:
         new_patient = PatientModel(
             name=patient.name,
             age=patient.age,
-            pickedfrom=patient.picked_from,
-            droppedat=patient.dropped_at,
+            picked_from=patient.picked_from,
+            dropped_at=patient.dropped_at,
             date=patient.date,
-            amount=patient.amount,
-            driver=current_user["username"],
+            driver= driver,
+            amount=patient.amount
         )
         db.add(new_patient)
         db.commit()
@@ -112,7 +117,7 @@ def add_patient(patient: PatientSchema, db: Session = Depends(get_db), token: st
 def get_search_criteria(search_criteria: PatientSearchCriteria, db: Session = Depends(get_db),
                         token: str = Depends(oauth2_scheme)):
     current_user = decode_jwt(token)
-    logger.info(f"User {current_user['username']} requesting search criteria for patients.")
+    # logger.info(f"User {current_user['username']} requesting search criteria for patients.")
     try:
         patient_search_query = None
         if current_user["role"] == "DRIVER":
@@ -141,34 +146,43 @@ def update_patient(patient_id: str, data_to_update: PatientUpdate, db: Session =
                    token: str = Depends(oauth2_scheme)):
     current_user = decode_jwt(token)
     logger.info(f"User {current_user['username']} updating patient with ID {patient_id}.")
+
     try:
-        patient_record = db.query(PatientModel).filter(
-            PatientModel.id == patient_id and str(current_user["username"]) == PatientModel.driver).first()
+        # Query ensures patient exists and user has permission (driver or OWNER)
+        patient_record = (
+            db.query(PatientModel)
+            .filter(
+                PatientModel.id == patient_id,
+                (PatientModel.driver == str(current_user["username"])) | (current_user["role"] == "OWNER")
+            )
+            .first()
+        )
 
         if not patient_record:
-            logger.warning(f"Patient {patient_id} not found for update.")
-            return HTTPException(status_code=404, detail=f"Patient {patient_id} does not exist.")
-        if current_user["username"] != patient_record.driver and current_user["role"] != "OWNER":
-            logger.warning(f"User {current_user['username']} does not have permission to update patient {patient_id}.")
-            return HTTPException(status_code=403, detail=f"You don't have permission to edit Patient {patient_id}.")
+            logger.warning(f"Patient {patient_id} not found or access denied.")
+            raise HTTPException(status_code=404, detail=f"Patient {patient_id} does not exist or access denied.")
 
-        data_to_update_dict = data_to_update.model_dump(exclude_unset=True)
-        filtered_data = {field: value for field, value in data_to_update_dict.items() if value not in [None, ""]}
+        update_data = data_to_update.model_dump(exclude_unset=True)
+        filtered_data = {k: v for k, v in update_data.items() if v not in [None, ""]}
 
         for field, value in filtered_data.items():
-            patient_record = patient_record.filter(getattr(PatientModel, field) == value)
+            setattr(patient_record, field, value)
 
         db.commit()
         db.refresh(patient_record)
+
         logger.info(f"Patient {patient_id} updated successfully.")
-        return {"updated record": patient_record}
+        return {"updated_record": patient_record}
+
+    except HTTPException as error:
+        raise error
     except Exception as e:
         db.rollback()
-        logger.error(f"Error occurred while updating patient {patient_id}: {str(e)}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An error occurred: {str(e)}")
+        logger.error(f"Error updating patient {patient_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
-@app.post("/delete/{patient_id}")
+@app.delete("/delete-patient/{patient_id}")
 def delete_patient(patient_id: str, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     current_user = decode_jwt(token)
     logger.info(f"User {current_user['username']} attempting to delete patient with ID {patient_id}.")
@@ -183,8 +197,10 @@ def delete_patient(patient_id: str, token: str = Depends(oauth2_scheme), db: Ses
 
         db.delete(patient_record)
         db.commit()
-        logger.info(f"Patient {patient_id} deleted successfully.")
-        return {"Record deleted: ": patient_record}
+        patient_dict = {c.name: getattr(patient_record, c.name) for c in patient_record.__table__.columns}
+        patient_info = ", ".join(f"{k}={v}" for k, v in patient_dict.items())
+        logger.info(f"Patient ({patient_info}) deleted successfully.")
+        return {"Record deleted: ": patient_info}
     except Exception as e:
         db.rollback()
         logger.error(f"Error occurred while deleting patient {patient_id}: {str(e)}")

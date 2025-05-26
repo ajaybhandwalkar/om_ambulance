@@ -6,6 +6,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import AddPatientForm from './components/forms/AddPatientForm';
 import RegisterUserForm from './components/forms/RegisterUserForm';
+import UpdatePatientForm from './components/forms/UpdatePatientForm';
 
 export default function App() {
   const [token, setToken] = useState('');
@@ -39,7 +40,7 @@ export default function App() {
             <Route path="/register-user" element={<PrivateRoute><RegisterUserForm /></PrivateRoute>} />
             <Route path="/login" element={<PrivateRoute><Login /></PrivateRoute>} />
             <Route path="/patient-dashboard" element={<PrivateRoute><PatientDashboard /></PrivateRoute>} />
-
+            <Route path="/update-patient" element={<PrivateRoute><UpdatePatientForm /></PrivateRoute>} />
           </Routes>
         </main>
 

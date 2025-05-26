@@ -1,4 +1,3 @@
-/* RegisterUserForm.css */
 .form-container {
   max-width: 400px;
   margin: 50px auto;
@@ -15,18 +14,17 @@ h2 {
   margin-bottom: 20px;
 }
 
-.error-message {
-  color: red;
+.message {
+  color: #d32f2f;
+  /* red-ish for error, will override for success inline */
   font-size: 14px;
   margin-bottom: 15px;
   text-align: center;
 }
 
-.success-message {
-  color: green;
-  font-size: 15px;
-  margin-bottom: 15px;
-  text-align: center;
+.message.success {
+  color: #4caf50;
+  /* green for success */
 }
 
 .form-group {
@@ -55,7 +53,7 @@ h2 {
   outline: none;
 }
 
-.register-user-form button {
+.add-patient-form button {
   width: 100%;
   padding: 12px;
   background-color: #4caf50;
@@ -66,4 +64,8 @@ h2 {
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s;
+}
+
+.add-patient-form button:hover {
+  background-color: #45a049;
 }

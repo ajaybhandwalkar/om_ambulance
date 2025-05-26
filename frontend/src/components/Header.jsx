@@ -12,15 +12,22 @@ export default function Header({ onLogout, showButtons }) {
     navigate('/register-user');  // Navigate to Register User page
   };
 
+  const handleDashboardClick = () => {
+    navigate('/');  // Navigate to Register User page
+  };
+
   const handleLogoutClick = () => {
     onLogout();  // Logout function (clear token)
   };
 
   return (
     <header style={{ background: '#eee', padding: '1rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <h1 style={{ margin: 0 }}>Om Ambulance</h1>
+      <h1 style={{ margin: 0 }} onClick={handleDashboardClick}>Om Ambulance</h1>
       {showButtons && (
         <div style={{ display: 'flex', gap: '1rem' }}>
+          <button onClick={handleDashboardClick} style={{ padding: '0.5rem 1rem', cursor: 'pointer' }}>
+            Dashboard
+          </button>
           <button onClick={handleAddPatientClick} style={{ padding: '0.5rem 1rem', cursor: 'pointer' }}>
             Add Patient
           </button>

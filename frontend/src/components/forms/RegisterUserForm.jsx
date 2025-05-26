@@ -7,15 +7,16 @@ export default function RegisterUserForm() {  // Pass token as a prop
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const [timeLeft, setTimeLeft] = useState(5);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrorMessage('');
+    setSuccessMessage('');
 
     // Create the user object to send to the backend
     const userData = { name, username, password };
@@ -33,7 +34,8 @@ export default function RegisterUserForm() {  // Pass token as a prop
       });
 
       // Handle successful registration
-      alert(response.data.msg);  // You can display a success message
+      setSuccessMessage(response.data.msg); // You can display a success message
+      await sleep(3000);
       navigate('/');  // Redirect to login or dashboard after successful registration
     } catch (error) {
       // Handle errors based on status code or general error
@@ -57,6 +59,7 @@ export default function RegisterUserForm() {  // Pass token as a prop
     <div className="form-container">
       <h2>Register New User</h2>
       {errorMessage && <p className="error-message">{errorMessage}</p>}
+      {successMessage && <p className="success-message">{successMessage}</p>}
       <form onSubmit={handleSubmit} className="register-user-form">
         <div className="form-group">
           <label htmlFor="name">Name</label>
