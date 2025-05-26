@@ -13,7 +13,9 @@ export default function PatientDashboard({ token }) {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
   const [totalCount, setTotalCount] = useState(0);
-  const [filters, setFilters] = useState({
+
+  const defaultFilters = {
+    id: '',
     name: '',
     picked_from: '',
     dropped_at: '',
@@ -21,7 +23,9 @@ export default function PatientDashboard({ token }) {
     from_date: '',
     to_date: '',
     driver: ''
-  });
+  };
+
+  const [filters, setFilters] = useState(defaultFilters);
 
   const fetchPatients = async () => {
     setError('');
@@ -113,6 +117,7 @@ export default function PatientDashboard({ token }) {
       </div>
 
       <form onSubmit={handleSubmit} className="filter-form">
+        <input name="id" placeholder="Patient ID" value={filters.id} onChange={handleChange} />
         <input name="name" placeholder="Name" value={filters.name} onChange={handleChange} />
         <input name="picked_from" placeholder="Picked From" value={filters.picked_from} onChange={handleChange} />
         <input name="dropped_at" placeholder="Dropped At" value={filters.dropped_at} onChange={handleChange} />
@@ -121,6 +126,7 @@ export default function PatientDashboard({ token }) {
         <input name="from_date" type="datetime-local" value={filters.from_date} onChange={handleChange} />
         <input name="to_date" type="datetime-local" value={filters.to_date} onChange={handleChange} />
         <button type="submit" className="filter-submit-btn">Search</button>
+        <button className="filter-submit-btn" onClick={() => setFilters(defaultFilters)}>Clear</button>
       </form>
 
       {/* Error */}
@@ -153,8 +159,8 @@ export default function PatientDashboard({ token }) {
                 <td>{p.age}</td>
                 <td>{p.driver}</td>
                 <td>{p.amount}</td>
-                <td>
-                  <button onClick={() => handleUpdate(p)} className="update-btn">Update</button>
+                <td align='center'>
+                  <button onClick={() => handleUpdate(p)} className="update-btn">Update</button>&nbsp;
                   <button onClick={() => handleDelete(p.id)} className="delete-btn">Delete</button>
                 </td>
               </tr>

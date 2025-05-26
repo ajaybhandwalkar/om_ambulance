@@ -48,6 +48,7 @@ class PatientCommonFields(BaseModel):
 
 
 class PatientSearchCriteria(PatientCommonFields):
+    id: Optional[str] = None
     from_date: Optional[datetime.datetime] = None
     to_date: Optional[datetime.datetime] = None
     driver: Optional[str] = ""
@@ -56,6 +57,15 @@ class PatientSearchCriteria(PatientCommonFields):
     @classmethod
     def parse_date(cls, value):
         return parse_date_string(value)
+
+    field_validator("id", mode='before')
+    @classmethod
+    def uuid_converter(cls, value):
+        try:
+            return uuid.UUID(value)
+        except:
+            logger.info(f"Invalid UUID {value}")
+        return None
 
 
 class PatientUpdate(PatientCommonFields):

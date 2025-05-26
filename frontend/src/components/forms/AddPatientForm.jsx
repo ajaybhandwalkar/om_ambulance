@@ -47,6 +47,7 @@ function AddPatientForm({ token }) {
           amount: "",
           driver: "",
         });
+        alert("Patient added successfully!");
         navigate('/');
       } else {
         const data = await response.json();
@@ -95,7 +96,7 @@ function AddPatientForm({ token }) {
 
       <div className="form-group">
         <label htmlFor="amount">Driver</label>
-        <input name="driver" id="driver" type="text" placeholder="Driver" value={form.driver} onChange={handleChange} required />
+        <input name="driver" id="driver" type="text" placeholder="Driver" value={form.driver} onChange={handleChange} />
       </div>
 
       <button type="submit">Add Patient</button>
