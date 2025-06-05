@@ -27,12 +27,32 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 def homepage():
-    logger.info("Homepage accessed.")
+    """
+    Root endpoint returning a welcome message.
+
+    Returns:
+        dict: A simple dictionary message welcoming the user.
+    """
     return {"message": "Wel-Come"}
 
 
 @app.post("/token")
 def create_token(data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """
+    Authenticate user credentials and generate a JWT token upon successful authentication.
+
+    Args:
+        data (OAuth2PasswordRequestForm): The form data containing username and password.
+        db (Session): Database session dependency.
+
+    Returns:
+        dict: A JWT token if authentication is successful.
+
+    Raises:
+        HTTPException: 401 if password is invalid,
+                       404 if user does not exist,
+                       500 for internal errors.
+    """
     logger.info(f"Token request for username: {data.username}")
     try:
         user_exists = db.query(UserModel).filter(data.username == UserModel.username).first()
@@ -55,9 +75,23 @@ def create_token(data: OAuth2PasswordRequestForm = Depends(), db: Session = Depe
 
 @app.post("/register")
 def register(user: UserSchema, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
-    print(token, user )
+    """
+    Register a new user. Only users with the role "OWNER" can register new users.
+
+    Args:
+        user (UserSchema): The new user details.
+        db (Session): Database session dependency.
+        token (str): JWT token of the current user.
+
+    Returns:
+        dict: Confirmation message of successful registration.
+
+    Raises:
+        HTTPException: 403 if current user is not OWNER,
+                       409 if username already exists,
+                       500 for internal server errors.
+    """
     current_user = decode_jwt(token)
-    print(current_user)
     logger.info(f"Attempt to register user: {user.username} by {current_user['username']}")
     if current_user['role'] != "OWNER":
         logger.warning(f"Forbade to register user {user.username} by {current_user['username']}")
@@ -69,7 +103,7 @@ def register(user: UserSchema, db: Session = Depends(get_db), token: str = Depen
             db.add(new_user)
             db.commit()
             db.refresh(new_user)
-            logger.info(f"User {user.username} registered successfully.")
+            logger.info(f"User {user.username} registered successfully by {current_user['username']}.")
             return {"msg": f"user {user.username} is registered."}
         else:
             logger.warning(f"Username {user.username} already exists.")
@@ -85,12 +119,27 @@ def register(user: UserSchema, db: Session = Depends(get_db), token: str = Depen
 
 @app.post("/add-patient")
 def add_patient(patient: PatientSchema, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+    """
+    Add a new patient record. The patient is linked to a driver. Drivers can only add patients assigned to them.
+    Owners can assign any driver or themselves.
+
+    Args:
+        patient (PatientSchema): The patient details.
+        db (Session): Database session dependency.
+        token (str): JWT token of the current user.
+
+    Returns:
+        dict: Confirmation message indicating patient added successfully.
+
+    Raises:
+        HTTPException: 500 if any internal error occurs.
+    """
     current_user = decode_jwt(token)
     logger.info(f"User {current_user['username']} adding a patient.")
     if current_user["role"] == "Driver":
         driver = current_user["username"]
     else:  # current_user["role"] == "Owner"
-        result = db.query(UserModel).filter(UserModel.name == patient.driver).first() if patient.driver else None
+        result = db.query(UserModel).filter(patient.driver == UserModel.name).first() if patient.driver else None
         driver = result.username if result else current_user["username"]
     try:
         new_patient = PatientModel(
@@ -99,7 +148,7 @@ def add_patient(patient: PatientSchema, db: Session = Depends(get_db), token: st
             picked_from=patient.picked_from,
             dropped_at=patient.dropped_at,
             date=patient.date,
-            driver= driver,
+            driver=driver,
             amount=patient.amount
         )
         db.add(new_patient)
@@ -116,8 +165,22 @@ def add_patient(patient: PatientSchema, db: Session = Depends(get_db), token: st
 @app.post("/get-search_criteria")
 def get_search_criteria(search_criteria: PatientSearchCriteria, db: Session = Depends(get_db),
                         token: str = Depends(oauth2_scheme)):
+    """
+    Retrieve patients based on search criteria. Drivers only see patients assigned to them,
+    while Owners see all patients.
+
+    Args:
+        search_criteria (PatientSearchCriteria): Filtering criteria for patients.
+        db (Session): Database session dependency.
+        token (str): JWT token of the current user.
+
+    Returns:
+        dict: List of patients matching the search criteria.
+
+    Raises:
+        HTTPException: 500 for internal server errors.
+    """
     current_user = decode_jwt(token)
-    # logger.info(f"User {current_user['username']} requesting search criteria for patients.")
     try:
         patient_search_query = None
         if current_user["role"] == "DRIVER":
@@ -144,16 +207,31 @@ def get_search_criteria(search_criteria: PatientSearchCriteria, db: Session = De
 @app.patch("/update-patient")
 def update_patient(patient_id: str, data_to_update: PatientUpdate, db: Session = Depends(get_db),
                    token: str = Depends(oauth2_scheme)):
+    """
+    Update patient details by patient ID. Users can update only patients they own or if user is Owner.
+
+    Args:
+        patient_id (str): The patient record ID.
+        data_to_update (PatientUpdate): Data to update for the patient.
+        db (Session): Database session dependency.
+        token (str): JWT token of the current user.
+
+    Returns:
+        dict: The updated patient record.
+
+    Raises:
+        HTTPException: 404 if patient not found or access denied,
+                       500 for internal server errors.
+    """
     current_user = decode_jwt(token)
     logger.info(f"User {current_user['username']} updating patient with ID {patient_id}.")
 
     try:
-        # Query ensures patient exists and user has permission (driver or OWNER)
         patient_record = (
             db.query(PatientModel)
             .filter(
-                PatientModel.id == patient_id,
-                (PatientModel.driver == str(current_user["username"])) | (current_user["role"] == "OWNER")
+                patient_id == PatientModel.id,
+                (PatientModel.driver == str(current_user["username"])) | ("OWNER" == current_user["role"])
             )
             .first()
         )
@@ -171,7 +249,7 @@ def update_patient(patient_id: str, data_to_update: PatientUpdate, db: Session =
         db.commit()
         db.refresh(patient_record)
 
-        logger.info(f"Patient {patient_id} updated successfully.")
+        logger.info(f"Patient {patient_id} updated successfully by {current_user['username']}.")
         return {"updated_record": patient_record}
 
     except HTTPException as error:
@@ -184,6 +262,22 @@ def update_patient(patient_id: str, data_to_update: PatientUpdate, db: Session =
 
 @app.delete("/delete-patient/{patient_id}")
 def delete_patient(patient_id: str, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    """
+    Delete a patient record by ID. Only the patient owner or Owners can delete.
+
+    Args:
+        patient_id (str): The patient record ID.
+        token (str): JWT token of the current user.
+        db (Session): Database session dependency.
+
+    Returns:
+        dict: Confirmation message with details of the deleted patient.
+
+    Raises:
+        HTTPException: 404 if patient not found,
+                       403 if user lacks permission,
+                       500 for internal server errors.
+    """
     current_user = decode_jwt(token)
     logger.info(f"User {current_user['username']} attempting to delete patient with ID {patient_id}.")
     try:
@@ -199,7 +293,7 @@ def delete_patient(patient_id: str, token: str = Depends(oauth2_scheme), db: Ses
         db.commit()
         patient_dict = {c.name: getattr(patient_record, c.name) for c in patient_record.__table__.columns}
         patient_info = ", ".join(f"{k}={v}" for k, v in patient_dict.items())
-        logger.info(f"Patient ({patient_info}) deleted successfully.")
+        logger.info(f"Patient ({patient_info}) deleted successfully by {current_user['username']}")
         return {"Record deleted: ": patient_info}
     except Exception as e:
         db.rollback()
