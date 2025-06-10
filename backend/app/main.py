@@ -162,7 +162,7 @@ def add_patient(patient: PatientSchema, db: Session = Depends(get_db), token: st
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An error occurred: {str(e)}")
 
 
-@app.post("/get-search_criteria")
+@app.post("/get-search-criteria")
 def get_search_criteria(search_criteria: PatientSearchCriteria, db: Session = Depends(get_db),
                         token: str = Depends(oauth2_scheme)):
     """

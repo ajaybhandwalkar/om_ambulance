@@ -38,7 +38,7 @@ export default function PatientDashboard({ token }) {
     }
 
     try {
-      const response = await axios.post('api/get-search_criteria', payload, {
+      const response = await axios.post('api/get-search-criteria', payload, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
